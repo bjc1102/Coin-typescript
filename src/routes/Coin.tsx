@@ -163,7 +163,8 @@ function Coin() {
     const { state } = useLocation<RouteState>();
     const priceMatch = useRouteMatch("/:coinId/price");    
     const chartMatch = useRouteMatch("/:coinId/chart");
-    console.log(priceMatch)
+    //null 아니면 object값만 필요하다
+
     const {isLoading: infoLoading, data:infoData } = useQuery<IInfoData>(
         ["info",coinId], () => fetchCoinInfo(coinId)
     );
@@ -226,7 +227,6 @@ function Coin() {
                     </Tabs>
                     <Switch>
                         <Route path={`/:coinId/price`}>{/* `/${coinId}/price` */}
-                            
                             <Price/>
                         </Route>
                         <Route path={`/:coinId/chart`}>
