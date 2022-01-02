@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from 'react'
 import styled from 'styled-components';
-import { Switch, Route, useLocation, useParams, Link, useRouteMatch} from 'react-router-dom'
+import { Switch, Route, useLocation, useParams, Link, useRouteMatch, RouteComponentProps} from 'react-router-dom'
 import Price from './Price';
 import Chart from './Chart';
 import { useQuery } from 'react-query';
 import { fetchCoinInfo, fetchTickersInfo } from '../api';
-
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 
 interface Params {
     coinId : string
@@ -22,6 +22,7 @@ const Container = styled.div`
     padding: 0px 20px;
     max-width: 480px;
     margin: 0 auto;
+    position: relative;
 `;
 
 const Title = styled.h1`
@@ -86,6 +87,18 @@ const Tab = styled.span<{isActive:boolean}>`
     }
 `
 
+const Back = styled.span`
+    position: absolute;
+    top: 45px;
+    left: -45px;
+    font-size: 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    &:hover {
+        color: ${props=> props.theme.accentColor}
+    }
+`
+
 interface RouteState {
     name:string;
 }
@@ -131,25 +144,26 @@ interface IPriceData {
     beta_value: number;
     first_data_at: string;
     last_updated: string;
-
     quotes: {
-        ath_date: string;
-        ath_price: number
-        market_cap: number
-        market_cap_change_24h: number
-        percent_change_1h: number
-        percent_change_1y: number
-        percent_change_6h: number
-        percent_change_7d: number
-        percent_change_12h: Number
-        percent_change_15m: number
-        percent_change_24h: number
-        percent_change_30d: number
-        percent_change_30m: number
-        percent_from_price_ath: number
-        price: number
-        volume_24h: number
-        volume_24h_change_24h: number
+        USD: {
+            ath_date: string;
+            ath_price: number
+            market_cap: number
+            market_cap_change_24h: number
+            percent_change_1h: number
+            percent_change_1y: number
+            percent_change_6h: number
+            percent_change_7d: number
+            percent_change_12h: Number
+            percent_change_15m: number
+            percent_change_24h: number
+            percent_change_30d: number
+            percent_change_30m: number
+            percent_from_price_ath: number
+            price: number
+            volume_24h: number
+            volume_24h_change_24h: number
+        };
     };
 }
 
@@ -166,13 +180,14 @@ function Coin() {
     //null 아니면 object값만 필요하다
 
     const {isLoading: infoLoading, data:infoData } = useQuery<IInfoData>(
-        ["info",coinId], () => fetchCoinInfo(coinId)
+        ["info",coinId], () => fetchCoinInfo(coinId),
+        {
+            refetchInterval: 5000,
+        }
     );
     const {isLoading: tickersLoading, data:tickersData} = useQuery<IPriceData>(
         ["tickers",coinId], () => fetchTickersInfo(coinId)
     );
-
-
     // useEffect(() => {
     //     (async () => {
     //         const infoData = await (
@@ -191,6 +206,12 @@ function Coin() {
 
     return (
         <Container>
+            <HelmetProvider>
+                <Helmet>
+                    <title>{state?.name ? state.name : loading ? "Loading..." : infoData?.name}</title>
+                </Helmet>
+            </HelmetProvider>    
+            <Back><Link to="/">&larr; Coins</Link></Back>
             <Header>
                 <Title>{state?.name ? state.name : loading ? "Loading..." : infoData?.name}</Title>
             </Header>
@@ -206,8 +227,8 @@ function Coin() {
                             <span>{infoData?.symbol}</span>
                         </OverViewItem>
                         <OverViewItem>
-                            <span>open source:</span>
-                            <span>{infoData?.rank}</span>
+                            <span>Price:</span>
+                            <span>${tickersData?.quotes.USD.price.toFixed(2)}</span>
                         </OverViewItem>
                     </OverView>
                     <Description>{infoData?.description}</Description>
@@ -222,15 +243,15 @@ function Coin() {
                         </OverViewItem>
                     </OverView>
                     <Tabs>
-                        <Tab isActive={chartMatch !==null}><Link to={`/${coinId}/chart`}>Chart</Link></Tab>
                         <Tab isActive={priceMatch !== null}><Link to={`/${coinId}/price`}>Price</Link></Tab>
+                        <Tab isActive={chartMatch !==null}><Link to={`/${coinId}/chart`}>Chart</Link></Tab>
                     </Tabs>
                     <Switch>
                         <Route path={`/:coinId/price`}>{/* `/${coinId}/price` */}
-                            <Price/>
+                            <Price coinId={coinId}/>
                         </Route>
                         <Route path={`/:coinId/chart`}>
-                            <Chart/>
+                            <Chart coinId={coinId}/>
                         </Route>
                     </Switch>
                 </>
@@ -241,4 +262,6 @@ function Coin() {
 // https://api.coinpaprika.com/v1/coins/btc-bitcoin
 // https://api.coinpaprika.com/v1/tickers/btc-bitcoin
 
+
+//https://api.coinpaprika.com/v1/coins/{coinId}/ohlcv/historical
 export default Coin

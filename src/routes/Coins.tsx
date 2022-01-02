@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useQuery } from 'react-query';
-import { Link } from 'react-router-dom';
+import { Link,useLocation } from 'react-router-dom';
 import styled from 'styled-components'
 import { fetchCoins } from '../api';
-
+import { Helmet, HelmetProvider } from 'react-helmet-async';
 
 const Container = styled.div`
     padding: 0px 20px;
@@ -67,8 +67,12 @@ interface ICoin {
     type: string,
 }
 
+
+
 function Coins() {
     const {isLoading, data} = useQuery<ICoin[]>("allCoins", fetchCoins)
+    const [progress, setProgress] = useState(0);
+
     // const [coins, setCoins] = useState<CoinInterface[]>([]);
     // const [loading, setLoading] = useState(true);
     // useEffect(()=> {
@@ -79,9 +83,23 @@ function Coins() {
     //         setLoading(false);
     //     })();
     // }, []);
+    const handleScroll = () => {
+        setProgress(document.documentElement.scrollTop);
+    }
+    useEffect(()=> {
+        window.scrollTo(0,progress)
+        window.addEventListener('scroll', handleScroll)
+        return () => window.addEventListener('scroll', handleScroll)
+    }, [])
+
 
     return (
         <Container>
+            <HelmetProvider>
+                <Helmet>
+                    <title>코인</title>
+                </Helmet>
+            </HelmetProvider>
             <Header>
                 <Title>코인</Title>
             </Header>
