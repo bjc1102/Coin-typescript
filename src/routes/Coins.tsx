@@ -4,6 +4,8 @@ import { Link,useLocation } from 'react-router-dom';
 import styled from 'styled-components'
 import { fetchCoins } from '../api';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { isDarkAtom, ScrollHis } from '../atom';
 
 const Container = styled.div`
     padding: 0px 20px;
@@ -28,8 +30,9 @@ const CoinsList = styled.ul`
 `;
 
 const Coin = styled.li`
-    background-color: white;
-    color: ${props=> props.theme.bgColor};
+    background-color: ${props=>props.theme.bgColor};
+    color: ${props=> props.theme.textColor};
+    border: 2px solid ${props=>props.theme.textColor};
     margin-bottom: 10px;
     border-radius: 15px;
     a {
@@ -69,29 +72,11 @@ interface ICoin {
 
 
 
+
 function Coins() {
     const {isLoading, data} = useQuery<ICoin[]>("allCoins", fetchCoins)
-    const [progress, setProgress] = useState(0);
-
-    // const [coins, setCoins] = useState<CoinInterface[]>([]);
-    // const [loading, setLoading] = useState(true);
-    // useEffect(()=> {
-    //     (async() => {
-    //         const response = await fetch("https://api.coinpaprika.com/v1/coins")
-    //         const json = await response.json();
-    //         setCoins(json.slice(0, 100));
-    //         setLoading(false);
-    //     })();
-    // }, []);
-    const handleScroll = () => {
-        setProgress(document.documentElement.scrollTop);
-    }
-    useEffect(()=> {
-        window.scrollTo(0,progress)
-        window.addEventListener('scroll', handleScroll)
-        return () => window.addEventListener('scroll', handleScroll)
-    }, [])
-
+    const setDarkAtom = useSetRecoilState(isDarkAtom)
+    const toggleDarkAtom = () => setDarkAtom(prev => !prev)
 
     return (
         <Container>
@@ -102,6 +87,7 @@ function Coins() {
             </HelmetProvider>
             <Header>
                 <Title>코인</Title>
+                <button onClick={toggleDarkAtom}>Toggle Dark mode</button>
             </Header>
             {isLoading ? <Loader>Loading...</Loader>
                 : <CoinsList>

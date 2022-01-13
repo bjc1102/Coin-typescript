@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react'
 import styled from 'styled-components';
-import { Switch, Route, useLocation, useParams, Link, useRouteMatch, RouteComponentProps} from 'react-router-dom'
+import { Switch, Route, useLocation, useParams, Link, useRouteMatch, RouteComponentProps, useHistory} from 'react-router-dom'
 import Price from './Price';
 import Chart from './Chart';
 import { useQuery } from 'react-query';
@@ -38,7 +38,7 @@ const Loader = styled.span`
 `
 
 const OverView = styled.div`
-    background-color: rgba(0,0,0,0.5);
+    background-color: ${props => props.theme.textColor};
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -51,6 +51,7 @@ const OverViewItem = styled.div`
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    color: ${props=> props.theme.bgColor};
     span:first-child {
         font-size: 10px;
         font-weight: 400;
@@ -72,27 +73,23 @@ const Tabs = styled.div`
 `
 
 const Tab = styled.span<{isActive:boolean}>`
-    background-color: rgba(0,0,0,0.5);
+    background-color: ${props=>props.theme.textColor};
     text-align: center;
     text-transform: uppercase;
     padding: 10px;
     border-radius: 10px;
     font-weight: 400;
     font-size: 15px;
-    -webkit-box-shadow: 5px 5px 5px -5px rgba(0,0,0,0.8); 
-    box-shadow: 5px 5px 5px -5px rgba(0,0,0,0.8);
-    color: ${props => props.isActive ? props.theme.accentColor : props.theme.textColor};
+    color: ${props => props.isActive ? props.theme.accentColor : props.theme.bgColor};
     a { //Router Link는 a태그를 가지고 있다
         display: block;
     }
 `
 
-const Back = styled.span`
+const Back = styled.button<IButtonProps>`
     position: absolute;
     top: 45px;
     left: -45px;
-    font-size: 16px;
-    font-weight: 500;
     transition: all 0.3s ease;
     &:hover {
         color: ${props=> props.theme.accentColor}
@@ -167,13 +164,13 @@ interface IPriceData {
     };
 }
 
+interface IButtonProps {
+    onClick:()=>void;
+}
 
 function Coin() {
-    // const [loading, setLoading] = useState(true);
-    // const [info, setInfo] = useState<IInfoData>();
-    // const [priceInfo, setPriceInfo] = useState<IPriceData>();
+
     const {coinId} = useParams<Params>();
-    // const {coinId} = useParams<{coinId:string}>();
     const { state } = useLocation<RouteState>();
     const priceMatch = useRouteMatch("/:coinId/price");    
     const chartMatch = useRouteMatch("/:coinId/chart");
@@ -188,21 +185,10 @@ function Coin() {
     const {isLoading: tickersLoading, data:tickersData} = useQuery<IPriceData>(
         ["tickers",coinId], () => fetchTickersInfo(coinId)
     );
-    // useEffect(() => {
-    //     (async () => {
-    //         const infoData = await (
-    //             await fetch(`https://api.coinpaprika.com/v1/coins/${coinId}`)
-    //         ).json();
-    //         const priceData = await (
-    //             await fetch(`https://api.coinpaprika.com/v1/tickers/${coinId}`)
-    //         ).json();
-    //         setInfo(infoData);
-    //         setPriceInfo(priceData);
-    //         setLoading(false);
-    //     })();
-    // }, [])
 
+    const {go, goBack, push} = useHistory ();
     const loading = infoLoading || tickersLoading;
+
 
     return (
         <Container>
@@ -211,7 +197,8 @@ function Coin() {
                     <title>{state?.name ? state.name : loading ? "Loading..." : infoData?.name}</title>
                 </Helmet>
             </HelmetProvider>    
-            <Back><Link to="/">&larr; Coins</Link></Back>
+            <Back onClick={() => push("/")}>뒤로가기</Back>
+            {/* 매개변수를 넘기고 싶으면 이렇게 쓴다 () => func() ...*/}
             <Header>
                 <Title>{state?.name ? state.name : loading ? "Loading..." : infoData?.name}</Title>
             </Header>
@@ -248,7 +235,7 @@ function Coin() {
                     </Tabs>
                     <Switch>
                         <Route path={`/:coinId/price`}>{/* `/${coinId}/price` */}
-                            <Price coinId={coinId}/>
+                            <Price coinId={coinId} USD={tickersData?.quotes.USD}/>
                         </Route>
                         <Route path={`/:coinId/chart`}>
                             <Chart coinId={coinId}/>

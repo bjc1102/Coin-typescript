@@ -3,6 +3,8 @@ import { useQuery } from 'react-query'
 import { useParams } from 'react-router-dom'
 import { fetchCoinHistory } from '../api'
 import ApexChart from "react-apexcharts";
+import { useRecoilValue } from 'recoil';
+import { isDarkAtom } from '../atom';
 
 
 interface IChartProps  {
@@ -23,6 +25,8 @@ interface ICoinData {
 function Chart({coinId}:IChartProps) {
     const {isLoading, data} = useQuery<ICoinData[]>(
         ["ohlcv", coinId], () => fetchCoinHistory(coinId), {refetchInterval:10000})
+    const isDark = useRecoilValue(isDarkAtom)
+
     return (
         <div>
             {isLoading ? "Loading chart..." : 
@@ -36,7 +40,7 @@ function Chart({coinId}:IChartProps) {
             ]}
             options={{ //첫번째 {} html태그에서 열 수 있게 해주고 두번째 {} object의 options를 찾아서 세 번째 {} 그 option의 값을 넣는다
                 theme : {
-                    mode:'dark'
+                    mode: isDark ? 'dark' : "light",
                 },
                 chart: {
                     height: 500,
